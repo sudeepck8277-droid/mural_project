@@ -272,3 +272,5 @@ Use `128` for the fastest response on a CPU-only machine.
 The model uses the optimal threshold saved by the notebook in the checkpoint
 or `segmentation_metadata.json`. Do not randomly change it before comparing
 against validation metrics.
+#   m u r a l _ p r o j e c t  
+ 
