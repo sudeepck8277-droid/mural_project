@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>AI Mural Restoration</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="top-bar"></div>
+
+<main class="shell">
+
+    <header class="hero">
+
+        <p class="eyebrow">
+            MURALDH · DEEP LEARNING PROJECT
+        </p>
+
+        <h1>
+            AI-Based Digital
+            <span>Mural Restoration</span>
+        </h1>
+
+        <p class="lead">
+            A three-stage cultural-heritage restoration pipeline
+            combining damage and scratch detection, pretrained LaMa restoration,
+            and ×4 super-resolution.
+        </p>
+
+    </header>
+
+
+    <section class="pipeline-card">
+
+        <div class="pipeline-step">
+            <div class="number">01</div>
+            <div>
+                <strong>Damage Detection</strong>
+                <span>U-Net++ + ZeroScratches</span>
+            </div>
+        </div>
+
+        <div class="connector">→</div>
+
+        <div class="pipeline-step">
+            <div class="number">02</div>
+            <div>
+                <strong>Image Restoration</strong>
+                <span>Pretrained LaMa</span>
+            </div>
+        </div>
+
+        <div class="connector">→</div>
+
+        <div class="pipeline-step">
+            <div class="number">03</div>
+            <div>
+                <strong>Super Resolution</strong>
+                <span>Dynamic EDSR ×4</span>
+            </div>
+        </div>
+
+    </section>
+
+
+    {% if not pipeline_ready %}
+
+    <section class="warning">
+
+        <strong>
+            Model files are not ready.
+        </strong>
+
+        <p>
+            Add the segmentation and EDSR models to <code>models/</code>,
+            run <code>python scripts/download_lama.py</code> for LaMa,
+            <code>python scripts/download_zeroscratches.py</code> for scratch detection,
+            and restart the server.
+        </p>
+
+        {% if pipeline_error %}
+        <details>
+            <summary>Technical details</summary>
+            <pre>{{ pipeline_error }}</pre>
+        </details>
+        {% endif %}
+
+    </section>
+
+    {% endif %}
+
+
+    <section class="workspace">
+
+        <div class="workspace-copy">
+
+            <p class="section-label">
+                START RESTORATION
+            </p>
+
+            <h2>
+                Upload a mural image
+            </h2>
+
+            <p>
+                For evaluation, use an unseen image from
+                <code>Mural_seg/test/images</code>.
+            </p>
+
+            <div class="small-info">
+                PNG · JPG · JPEG · BMP · WEBP
+                <br>
+                Maximum upload size: 20 MB
+            </div>
+
+        </div>
+
+
+        <div class="upload-panel">
+
+            <form
+                id="restoreForm"
+                enctype="multipart/form-data"
+            >
+
+                <label
+                    for="imageInput"
+                    class="drop-zone"
+                    id="dropZone"
+                >
+
+                    <input
+                        id="imageInput"
+                        name="image"
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        required
+                    >
+
+                    <div
+                        class="preview-wrap"
+                        id="previewWrap"
+                    >
+
+                        <div class="upload-icon">
+                            ↑
+                        </div>
+
+                        <strong>
+                            Select mural image
+                        </strong>
+
+                        <span>
+                            or drag & drop it here
+                        </span>
+
+                    </div>
+
+                </label>
+
+
+                <button
+                    id="processButton"
+                    class="primary-button"
+                    type="submit"
+                    {% if not pipeline_ready %}disabled{% endif %}
+                >
+                    Start AI Restoration
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <section
+        id="progressSection"
+        class="progress-card hidden"
+    >
+
+        <div class="spinner"></div>
+
+        <div>
+            <strong id="progressTitle">
+                Processing mural…
+            </strong>
+
+            <span id="progressText">
+                Running segmentation, restoration and super-resolution.
+            </span>
+        </div>
+
+    </section>
+
+
+    <section
+        id="errorSection"
+        class="error-card hidden"
+    ></section>
+
+
+    <section
+        id="resultsSection"
+        class="results hidden"
+    >
+
+        <div class="results-heading">
+
+            <div>
+                <p class="section-label">
+                    RESTORATION COMPLETE
+                </p>
+
+                <h2>
+                    Processing Results
+                </h2>
+            </div>
+
+            <button
+                id="newImageButton"
+                class="secondary-button"
+                type="button"
+            >
+                Process Another Image
+            </button>
+
+        </div>
+
+
+        <div class="metrics-grid">
+
+            <div class="metric">
+                <span>
+                    Combined Damage
+                </span>
+                <strong id="damagePercentage">
+                    —
+                </strong>
+            </div>
+
+            <div class="metric">
+                <span>
+                    U-Net++ Threshold
+                </span>
+                <strong id="thresholdValue">
+                    —
+                </strong>
+            </div>
+
+            <div class="metric">
+                <span>
+                    Input Resolution
+                </span>
+                <strong id="inputResolution">
+                    —
+                </strong>
+            </div>
+
+            <div class="metric">
+                <span>
+                    SR Resolution
+                </span>
+                <strong id="srResolution">
+                    —
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="diagnostics detection-summary">
+            <div><span>U-Net++ damage</span><strong id="trainedCoverage">&mdash;</strong></div>
+            <div><span>ZeroScratches damage</span><strong id="scratchCoverage">&mdash;</strong></div>
+            <div><span>Additional area from scratches</span><strong id="additionalCoverage">&mdash;</strong></div>
+        </div>
+
+        <div class="result-grid">
+
+            <article class="result-card">
+
+                <div class="card-header">
+                    <span>01</span>
+                    <div>
+                        <h3>
+                            Original Mural
+                        </h3>
+                        <p>
+                            Uploaded source image
+                        </p>
+                    </div>
+                </div>
+
+                <div class="image-stage">
+                    <img
+                        id="originalResult"
+                        alt="Original mural"
+                    >
+                </div>
+
+            </article>
+
+
+            <article class="result-card">
+
+                <div class="card-header">
+                    <span>02</span>
+                    <div>
+                        <h3>
+                            Combined Damage Mask
+                        </h3>
+                        <p>
+                            Damage found by either detector; sent to LaMa
+                        </p>
+                    </div>
+                </div>
+
+                <div class="image-stage mask-stage">
+                    <img
+                        id="maskResult"
+                        alt="Combined U-Net++ and ZeroScratches damage mask"
+                    >
+                </div>
+
+            </article>
+
+
+            <article class="result-card">
+                <div class="card-header">
+                    <span>03</span>
+                    <div><h3>Trained Model Mask</h3><p>U-Net++ mural damage detection</p></div>
+                </div>
+                <div class="image-stage mask-stage">
+                    <img id="trainedMaskResult" alt="Damage detected by the trained U-Net++ model">
+                </div>
+            </article>
+
+            <article class="result-card">
+                <div class="card-header">
+                    <span>04</span>
+                    <div><h3>Scratch Mask</h3><p>Pretrained ZeroScratches detection</p></div>
+                </div>
+                <div class="image-stage mask-stage">
+                    <img id="scratchMaskResult" alt="Scratches detected by ZeroScratches">
+                </div>
+            </article>
+
+            <article class="result-card">
+
+                <div class="card-header">
+                    <span>05</span>
+                    <div>
+                        <h3>
+                            Damage Overlay
+                        </h3>
+                        <p>
+                            Predicted damaged regions
+                        </p>
+                    </div>
+                </div>
+
+                <div class="image-stage">
+                    <img
+                        id="overlayResult"
+                        alt="Damage overlay"
+                    >
+                </div>
+
+            </article>
+
+
+            <article class="result-card">
+
+                <div class="card-header">
+                    <span>06</span>
+                    <div>
+                        <h3>
+                            Restored Mural
+                        </h3>
+                        <p>
+                            Pretrained LaMa texture reconstruction
+                        </p>
+                    </div>
+                </div>
+
+                <div class="image-stage">
+                    <img
+                        id="restoredResult"
+                        alt="Restored mural"
+                    >
+                </div>
+
+            </article>
+
+
+            <article class="result-card final-card">
+
+                <div class="card-header">
+                    <span>07</span>
+                    <div>
+                        <h3>
+                            Final ×4 Enhanced Mural
+                        </h3>
+                        <p>
+                            Dynamic EDSR super-resolution output
+                        </p>
+                    </div>
+                </div>
+
+                <div class="image-stage">
+                    <img
+                        id="srResult"
+                        alt="Super resolved mural"
+                    >
+                </div>
+
+                <a
+                    id="downloadSR"
+                    class="download-button"
+                    download="restored_mural_x4.png"
+                >
+                    Download Final Result
+                </a>
+
+            </article>
+
+        </div>
+
+
+        <details class="debug-card">
+
+            <summary>
+                Segmentation diagnostics
+            </summary>
+
+            <div class="diagnostics">
+
+                <div>
+                    <span>
+                        U-Net++ probability min
+                    </span>
+                    <strong id="probMin">—</strong>
+                </div>
+
+                <div>
+                    <span>
+                        U-Net++ probability mean
+                    </span>
+                    <strong id="probMean">—</strong>
+                </div>
+
+                <div>
+                    <span>
+                        U-Net++ probability max
+                    </span>
+                    <strong id="probMax">—</strong>
+                </div>
+
+                <div><span>ZeroScratches threshold</span><strong id="scratchThreshold">—</strong></div>
+                <div><span>ZeroScratches probability mean</span><strong id="scratchProbMean">—</strong></div>
+                <div><span>ZeroScratches probability max</span><strong id="scratchProbMax">—</strong></div>
+
+            </div>
+
+        </details>
+
+    </section>
+
+</main>
+
+<script
+    src="{{ url_for('static', filename='js/app.js') }}"
+></script>
+
+</body>
+</html>

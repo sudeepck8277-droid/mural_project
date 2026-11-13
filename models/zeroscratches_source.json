@@ -1,0 +1,11 @@
+{
+  "model": "ZeroScratches pretrained scratch detector",
+  "library": "zeroscratches==1.0.2",
+  "upstream_project": "https://github.com/leonelhs/zeroscratches",
+  "download_url": "https://huggingface.co/leonelhs/zeroscratches/resolve/main/detection/FT_Epoch_latest.pt",
+  "filename": "zeroscratches/detection/FT_Epoch_latest.pt",
+  "size_bytes": 451663663,
+  "sha256": "b2d7ab04e9b3885c6b1991bb7a0b823129dd6e3ac078a9fd059ebd2a7ba59a95",
+  "default_threshold": 0.4,
+  "restoration_backend": "Pretrained LaMa"
+}

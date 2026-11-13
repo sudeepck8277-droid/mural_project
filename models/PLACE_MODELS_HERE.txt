@@ -1,0 +1,16 @@
+Required model files:
+
+1. mural_damage_unetplusplus_efficientnetb3.pth
+2. big-lama.pt (pretrained Big-LaMa TorchScript)
+3. final_mural_edsr_x4_dynamic.keras
+4. zeroscratches/detection/FT_Epoch_latest.pt
+
+Optional: segmentation_metadata.json (checkpoint metadata takes priority).
+
+Download and verify LaMa from the project root:
+    python scripts/download_lama.py
+    python scripts/download_zeroscratches.py
+
+The old best_restoration_autoencoder.keras is no longer used.
+LaMa source and checksum: lama_source.json
+ZeroScratches source and checksum: zeroscratches_source.json

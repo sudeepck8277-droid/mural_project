@@ -1,0 +1,20 @@
+name: mural_flask
+channels:
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pip
+
+  - pip:
+      - Flask==3.0.3
+      - Werkzeug==3.0.3
+      - numpy==1.26.4
+      - opencv-python==4.10.0.84
+      - Pillow==10.4.0
+      - tensorflow==2.16.1
+      - torch==2.4.1
+      - torchvision==0.19.1
+      - segmentation-models-pytorch==0.3.4
+      - timm==1.0.9
+      - zeroscratches==1.0.2
